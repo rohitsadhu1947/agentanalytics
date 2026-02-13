@@ -7,7 +7,11 @@ const app = express();
 const PORT = 3001;
 const cache = new NodeCache({ checkperiod: 120 });
 
-app.use(cors({ origin: 'http://localhost:5173' }));
+app.use(cors({
+  origin: process.env.VERCEL
+    ? true   // allow all origins in production (same-domain via rewrites)
+    : 'http://localhost:5173'
+}));
 app.use(express.json());
 
 // ---------------------------------------------------------------------------
@@ -2354,25 +2358,20 @@ app.get(
 );
 
 // =========================================================================
-// Start server
+// Start server (only in local dev — skipped on Vercel)
 // =========================================================================
 
-app.listen(PORT, async () => {
-  console.log(`InsurTech API server running on http://localhost:${PORT}`);
-  await testConnection();
-  console.log('Available endpoint sections:');
-  console.log('  /api/executive    — KPIs, growth, concentration');
-  console.log('  /api/agents       — segmentation, activation, distribution');
-  console.log('  /api/funnel       — conversion, stuck-quoters, by-product');
-  console.log('  /api/products     — mix, trend, business-type');
-  console.log('  /api/brokers      — performance, dormant, trend');
-  console.log('  /api/geographic   — states, state-product');
-  console.log('  /api/insurers     — share, trend');
-  console.log('  /api/renewals     — upcoming, at-risk');
-  console.log('  /api/alerts       — summary, declining-agents, stuck-quoters, inactive-agents');
-  console.log('  /api/operations   — today, week-comparison, leaderboard');
-  console.log('  /api/advanced     — revenue-at-risk, weekly-pulse');
-  console.log('  /api/health       — DB connection check');
-  console.log('  POST /api/cache/clear — Flush all cached data');
-  console.log('  Filter params: ?date_range=last_30_days|last_3_months|last_6_months|last_12_months|all_time&broker=...&product=...&state=...');
-});
+if (!process.env.VERCEL) {
+  app.listen(PORT, async () => {
+    console.log(`InsurTech API server running on http://localhost:${PORT}`);
+    await testConnection();
+    console.log('Available endpoint sections:');
+    console.log('  /api/executive, /api/agents, /api/funnel, /api/products');
+    console.log('  /api/brokers, /api/geographic, /api/insurers, /api/renewals');
+    console.log('  /api/alerts, /api/operations, /api/advanced, /api/health');
+    console.log('  Filter params: ?date_range=...&broker=...&product=...&state=...');
+  });
+}
+
+// Export for Vercel serverless function
+export default app;
